@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>meowterminal</title>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Nunito:wght@400;600;700;800&family=Press+Start+2P&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blush: #ffb6c1;
+    --petal: #ffd6e0;
+    --cream: #fff0f5;
+    --deep-pink: #ff85a1;
+    --hot-pink: #ff4d88;
+    --text-pink: #c2185b;
+    --terminal-bg: #2d0a1a;
+    --terminal-mid: #3d0f22;
+    --terminal-glow: #ff6eb4;
+    --green: #ff9ecf;
+    --cursor: #ffb3d9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e7 30%, #ffcce0 60%, #ffe0ec 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Josefin Sans', sans-serif;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* floating pixel hearts */
+  .pixel-heart {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 0;
+    image-rendering: pixelated;
+  }
+  .pixel-heart.up {
+    animation: floatUp linear infinite;
+  }
+  .pixel-heart.down {
+    animation: floatDown linear infinite;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(110vh); opacity: 0; }
+    8%   { opacity: 0.75; }
+    92%  { opacity: 0.5; }
+    100% { transform: translateY(-10vh); opacity: 0; }
+  }
+  @keyframes floatDown {
+    0%   { transform: translateY(-10vh); opacity: 0; }
+    8%   { opacity: 0.75; }
+    92%  { opacity: 0.5; }
+    100% { transform: translateY(110vh); opacity: 0; }
+  }
+
+  /* noise grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    z-index: 2;
+    position: relative;
+    padding: 20px;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  /* ─── ASCII GIRLS ─── */
+  .ascii-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .ascii-card {
+    background: rgba(255,255,255,0.55);
+    border: 2px solid rgba(255,150,190,0.4);
+    border-radius: 20px;
+    padding: 16px 20px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 24px rgba(255,100,170,0.15), inset 0 1px 0 rgba(255,255,255,0.8);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .ascii-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .ascii-card:hover {
+    transform: translateY(-4px) rotate(-1deg);
+    box-shadow: 0 12px 36px rgba(255,100,170,0.25);
+  }
+  .ascii-card pre {
+    font-family: 'VT323', monospace;
+    font-size: 0.78rem;
+    line-height: 1.15;
+    color: var(--text-pink);
+    text-align: left;
+    white-space: pre;
+  }
+  .ascii-card .label {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--hot-pink);
+    margin-top: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ─── TERMINAL ─── */
+  .terminal-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .terminal-title-bar {
+    background: linear-gradient(90deg, #ff85a1, #ffb3d9, #ff85a1);
+    border-radius: 16px 16px 0 0;
+    width: 100%;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .dot {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: filter 0.2s;
+  }
+  .dot:hover { filter: brightness(1.2); }
+  .dot.red    { background: #ff6b8a; border: 1px solid #d94f6e; }
+  .dot.yellow { background: #ffffff; border: 1px solid #ddd; }
+  .dot.green  { background: #ff9ecf; border: 1px solid #d97aad; }
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 0.6rem;
+    font-weight: 400;
+    color: #fff;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 8px rgba(255,180,220,0.6), 2px 2px 0px rgba(180,40,100,0.4);
+    font-family: 'Press Start 2P', monospace;
+    white-space: nowrap;
+  }
+
+  .terminal {
+    width: 660px;
+    height: 500px;
+    background: var(--terminal-bg);
+    border: 2px solid #ff6eb4;
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow:
+      0 0 40px rgba(255,110,180,0.35),
+      0 0 80px rgba(255,110,180,0.1),
+      inset 0 0 60px rgba(255,50,150,0.05);
+    position: relative;
+  }
+
+  /* scanlines */
+  .terminal::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,50,150,0.03) 2px,
+      rgba(255,50,150,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .output-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 0 8px 18px;
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #ffb3d9;
+    scrollbar-width: thin;
+    scrollbar-color: #ff6eb4 #2d0a1a;
+  }
+  .output-area::-webkit-scrollbar { width: 4px; }
+  .output-area::-webkit-scrollbar-track { background: #2d0a1a; }
+  .output-area::-webkit-scrollbar-thumb { background: #ff6eb4; border-radius: 4px; }
+
+  .line { margin-bottom: 2px; display: block; }
+  .line.prompt { color: var(--terminal-glow); }
+  .line.output { color: #ffc8e8; }
+  .line.error  { color: #ff6b8a; }
+  .line.info   { color: #ff9ecf; }
+  .line.white { color: rgba(255,255,255,0.88); }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 18px 14px;
+    border-top: 1px solid rgba(255,110,180,0.2);
+    gap: 14px;
+    background: rgba(255,20,100,0.04);
+  }
+  .prompt-sym {
+    color: var(--terminal-glow);
+    font-family: 'VT323', monospace;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    text-shadow: 0 0 8px rgba(255,110,180,0.8);
+  }
+  #cmd-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'VT323', monospace;
+    font-size: 1.05rem;
+    color: #ffecf5;
+    caret-color: var(--cursor);
+    letter-spacing: 0.05em;
+  }
+  #cmd-input::placeholder { color: rgba(255,150,200,0.3); }
+
+  .tag {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--deep-pink);
+    letter-spacing: 0.12em;
+    opacity: 0.8;
+    font-family: 'VT323', monospace;
+  }
+
+  /* glow pulse on terminal */
+  @keyframes borderPulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(255,110,180,0.35), 0 0 80px rgba(255,110,180,0.1), inset 0 0 60px rgba(255,50,150,0.05); }
+    50%       { box-shadow: 0 0 60px rgba(255,110,180,0.55), 0 0 100px rgba(255,110,180,0.18), inset 0 0 80px rgba(255,50,150,0.08); }
+  }
+  .terminal { animation: borderPulse 3s ease-in-out infinite; }
+
+  .px-heart {
+    display: inline-block;
+    width: 14px;
+    height: 12px;
+    image-rendering: pixelated;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+  .cat-art {
+    font-family: monospace;
+    font-size: 0.34rem;
+    line-height: 1.1;
+    color: rgba(255,255,255,0.55);
+    white-space: pre;
+    padding: 4px 18px 0;
+    display: block;
+    pointer-events: none;
+  }
+  .cursor { display: inline-block; width: 8px; height: 1em; background: var(--cursor); margin-left: 2px; vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+
+  .side-art {
+    flex-shrink: 0;
+    align-self: flex-end;
+    line-height: 1.05;
+    font-family: monospace;
+    font-size: 0.42rem;
+    color: #d4588a;
+    white-space: pre;
+    opacity: 0.82;
+    filter: drop-shadow(0 0 6px rgba(255,100,170,0.3));
+    user-select: none;
+    letter-spacing: 0em;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- CENTER TERMINAL -->
+  <div class="terminal-wrapper">
+    <div style="width:660px;">
+      <div class="terminal-title-bar">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="terminal-title" style="position:absolute; left:50%; transform:translateX(-50%);">meowterminal ฅ^•ﻌ•^ฅ</div>
+      </div>
+      <div class="terminal" id="terminal">
+        <div class="output-area" id="output"></div>
+        <div style="display:flex; align-items:center; padding: 4px 18px 0; gap: 8px;">
+          <pre class="cat-art" style="padding:0; margin:0;">⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⡾⠿⠷⣶⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⡟⠀⠀⠀⠀⠈⠛⢷⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣶⠿⠛⠉⠉⠻⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⡟⠀⠀⠀⠀⠀⠀⠀⠀⠙⢷⣄⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣴⠟⠋⠀⠀⠀⠀⠀⠀⢿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠛⠛⠛⠻⠿⠷⠶⢶⣶⣶⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⢸⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⡄⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣸⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⡄⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢠⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠛⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⣿⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⢀⣀⣠⣤⣼⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠿⠗⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣀⡀⠀⠀⠀⠀⣿⡆⠀⠀⠀⠀⠀⠀
+⢠⣶⡿⠿⠛⢛⣫⣿⣿⣶⣶⠶⢶⣶⣦⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⡾⠟⠛⠛⠛⠛⠛⠛⠿⣶⣤⡀⣿⣷⣦⣤⣤⣀⠀⠀
+⣿⣯⣀⣀⣠⣾⡟⠉⠀⠀⠀⠀⠀⠀⠀⠉⠻⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣷⣿⡏⠉⠛⠛⢻⣷⡄
+⠈⠙⠛⠛⢿⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⣆⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣷⣶⣶⣶⡿⠛⠀
+⠀⠀⠀⠀⠘⣷⣀⣀⣀⣤⡀⠀⠀⠀⣀⠀⠀⢠⣿⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠻⣧⣤⣠⣴⣦⣀⠀⣀⣤⣦⣀⣀⣠⣾⠋⠁⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠈⠛⠛⠛⠙⠿⢷⣶⠿⠛⠿⠿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠉⠁⠙⠛⠛⠛⠉⠉⠙⠛⠉⠁</pre>
+          <span style="font-family:'VT323',monospace; font-size:1.1rem; color:rgba(255,180,220,0.7); letter-spacing:0.05em;">nya nya nya</span>
+        </div>
+        <div class="input-row">
+          <span class="prompt-sym"><img class="px-heart" id="prompt-heart"></span>
+          <input type="text" id="cmd-input" placeholder="beep boop beep boop" autocomplete="off" spellcheck="false" />
+        </div>
+      </div>
+    </div>
+    <div id="made-by" style="width:660px; margin-top:10px; text-align:center; font-family:'VT323',monospace; font-size:1rem; color:rgba(210,100,160,0.75); letter-spacing:0.08em;">
+      made by <a href="https://github.com/zankyoz" target="_blank" style="color:rgba(210,100,160,0.9); text-decoration:none; border-bottom:1px solid rgba(210,100,160,0.4);">yana</a> :3
+    </div>
+  </div>
+
+
+
+
+
+</div>
+
+<script>
+const output = document.getElementById('output');
+const input  = document.getElementById('cmd-input');
+
+// ── filesystem ──────────────────────────────────────────────
+const FS = {
+  '/': {
+    type: 'dir',
+    children: {
+      home: {
+        type: 'dir',
+        children: {
+          user: {
+            type: 'dir',
+            children: {
+              'readme.txt':  { type: 'file', content: 'hi!! welcome to meowterminal :3\nmade with love by yana ♡\n\ntype help to see all commands!' },
+              'journal.txt': { type: 'file', content: 'dear diary,\ntoday was very pink.\ni ate a strawberry mochi.\n10/10 day :3' },
+              'ideas.txt':   { type: 'file', content: '- make more cute terminals\n- learn to code\n- pet more cats\n- drink more water !!' },
+              projects: {
+                type: 'dir',
+                children: {
+                  'website.txt': { type: 'file', content: 'project: kawaii website\nstatus: SO CUTE\nprogress: 100% :3' },
+                }
+              }
+            }
+          }
+        }
+      },
+      etc: {
+        type: 'dir',
+        children: {
+          'meow.conf': { type: 'file', content: 'meow=true\nnyan=always\ncuteness=maximum' },
+        }
+      }
+    }
+  }
+};
+
+let cwd = '/home/user';
+const history = [];
+let histIdx = -1;
+
+function resolvePath(p) {
+  const base = p.startsWith('/') ? [] : cwd.split('/').filter(Boolean);
+  const parts = p.split('/').filter(Boolean);
+  const stack = [...base];
+  for (const part of parts) {
+    if (part === '..') stack.pop();
+    else if (part !== '.') stack.push(part);
+  }
+  return '/' + stack.join('/');
+}
+
+function getNode(path) {
+  const parts = path.split('/').filter(Boolean);
+  let node = FS['/'];
+  for (const p of parts) {
+    if (!node || node.type !== 'dir' || !node.children[p]) return null;
+    node = node.children[p];
+  }
+  return node;
+}
+
+function getParentAndName(path) {
+  const abs = resolvePath(path);
+  const parts = abs.split('/').filter(Boolean);
+  const name = parts.pop();
+  const parentPath = '/' + parts.join('/');
+  return { parent: getNode(parentPath), name, parentPath };
+}
+
+// ── kawaii extras ────────────────────────────────────────────
+const KAOMOJI_CMDS = {
+  hello: () => [
+    { t:'output', v:'ヾ(≧▽≦*)o  hello lovely human!!' },
+    { t:'output', v:'you are very cute today~' },
+    { t:'output', v:'♡  have a wonderful day  ♡' },
+  ],
+  uwu: () => [
+    { t:'info',   v:'(˶ᵔ ᵕ ᵔ˶)' },
+    { t:'output', v:'uwuuuuu~ (*≧ω≦)' },
+  ],
+  meow: () => [
+    { t:'info',   v:' /ᐠ｡ꞈ｡ᐟ\\  nyaaaa~' },
+    { t:'output', v:'meow meow meow! ฅ^•ﻌ•^ฅ' },
+    { t:'output', v:'*purrs loudly*' },
+  ],
+  stats: () => [
+    { t:'info',   v:'✦ your kawaii stats ✦' },
+    { t:'output', v:`  cuteness:   ${'♡'.repeat(Math.ceil(Math.random()*3+7))}` },
+    { t:'output', v:`  uwu level:  ${'★'.repeat(Math.ceil(Math.random()*3+6))}` },
+    { t:'output', v:`  pink power: ${'✿'.repeat(Math.ceil(Math.random()*3+7))}` },
+    { t:'output', v:`  nyan score: ${Math.floor(Math.random()*1000+9000)}/10000` },
+  ],
+  love: () => [
+    { t:'info',   v:'sending love your way...' },
+    { t:'output', v:'  ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡' },
+    { t:'output', v:'  you are loved and appreciated!' },
+    { t:'output', v:'  ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡ ♡' },
+  ],
+};
+
+// ── persistence (localStorage) ───────────────────────────────
+function saveFS() {
+  try { localStorage.setItem('meowterm_fs', JSON.stringify(FS)); } catch {}
+}
+function loadFS() {
+  try {
+    const saved = localStorage.getItem('meowterm_fs');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(FS, parsed);
+    }
+  } catch {}
+}
+function saveNotes(notes) {
+  try { localStorage.setItem('meowterm_notes', JSON.stringify(notes)); } catch {}
+}
+function loadNotes() {
+  try {
+    const saved = localStorage.getItem('meowterm_notes');
+    return saved ? JSON.parse(saved) : [];
+  } catch { return []; }
+}
+loadFS();
+
+// shared JS context for `js` command
+const jsContext = { history: [], output: null };
+
+
+function addLine(type, text) {
+  const span = document.createElement('span');
+  span.className = `line ${type}`;
+  span.textContent = text;
+  output.appendChild(span);
+  output.scrollTop = output.scrollHeight;
+}
+
+function runCommand(raw) {
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  history.unshift(trimmed);
+  histIdx = -1;
+
+  addLine('prompt', `♡ ${trimmed}`);
+
+  const parts = trimmed.match(/(?:[^\s"']+|"[^"]*"|'[^']*')+/g) || [];
+  const cmd = parts[0].toLowerCase();
+  const args = parts.slice(1).map(a => a.replace(/^['"]|['"]$/g, ''));
+
+  // kawaii commands
+  if (KAOMOJI_CMDS[cmd]) {
+    KAOMOJI_CMDS[cmd]().forEach(l => addLine(l.t, l.v));
+    addLine('output', '');
+    return;
+  }
+
+  switch (cmd) {
+
+    case 'help': {
+      addLine('info',   '╔══════════════════════════════════════╗');
+      addLine('info',   '║         meowterminal commands         ║');
+      addLine('info',   '╚══════════════════════════════════════╝');
+      addLine('output', '  -- filesystem --');
+      addLine('output', '  ls [path]         list directory');
+      addLine('output', '  cd <path>         change directory');
+      addLine('output', '  pwd               print working dir');
+      addLine('output', '  cat <file>        read a file');
+      addLine('output', '  touch <file>      create a file');
+      addLine('output', '  mkdir <dir>       make a directory');
+      addLine('output', '  rm <name>         remove file/dir');
+      addLine('output', '  mv <src> <dst>    move / rename');
+      addLine('output', '  cp <src> <dst>    copy a file');
+      addLine('output', '  write <f> <text>  write text to file');
+      addLine('output', '  -- javascript --');
+      addLine('output', '  js <code>         run real javascript!!');
+      addLine('output', '  calc <expr>       calculator');
+      addLine('output', '  -- persistent storage --');
+      addLine('output', '  note <text>       save a note');
+      addLine('output', '  note del <n>      delete note by #');
+      addLine('output', '  notes             list all notes');
+      addLine('output', '  set <key> <val>   store a value');
+      addLine('output', '  get <key>         retrieve a value');
+      addLine('output', '  keys              list stored keys');
+      addLine('output', '  del <key>         delete a key');
+      addLine('output', '  clearstorage      wipe all saved data');
+      addLine('output', '  -- system --');
+      addLine('output', '  echo <text>       print text');
+      addLine('output', '  whoami            who are you');
+      addLine('output', '  date              current date & time');
+      addLine('output', '  history           command history');
+      addLine('output', '  clear             clear screen');
+      addLine('output', '  -- kawaii --');
+      addLine('output', '  hello / uwu / meow / stats / love');
+      break;
+    }
+    case 'pwd':
+      addLine('output', cwd);
+      break;
+
+    case 'ls': {
+      const target = args[0] ? resolvePath(args[0]) : cwd;
+      const node = getNode(target);
+      if (!node) { addLine('error', `ls: no such directory: ${args[0] || target}`); break; }
+      if (node.type === 'file') { addLine('output', args[0]); break; }
+      const entries = Object.entries(node.children);
+      if (!entries.length) { addLine('system', '(empty)'); break; }
+      entries.forEach(([name, n]) => {
+        addLine('output', n.type === 'dir' ? `  [dir]  ${name}/` : `  [file] ${name}`);
+      });
+      break;
+    }
+
+    case 'cd': {
+      if (!args[0] || args[0] === '~') { cwd = '/home/user'; break; }
+      const target = resolvePath(args[0]);
+      const node = getNode(target);
+      if (!node) { addLine('error', `cd: no such directory: ${args[0]}`); break; }
+      if (node.type !== 'dir') { addLine('error', `cd: not a directory: ${args[0]}`); break; }
+      cwd = target;
+      break;
+    }
+
+    case 'cat': {
+      if (!args[0]) { addLine('error', 'cat: missing filename'); break; }
+      const target = resolvePath(args[0]);
+      const node = getNode(target);
+      if (!node) { addLine('error', `cat: no such file: ${args[0]}`); break; }
+      if (node.type === 'dir') { addLine('error', `cat: ${args[0]} is a directory`); break; }
+      node.content.split('\n').forEach(line => addLine('output', line));
+      break;
+    }
+
+    case 'touch': {
+      if (!args[0]) { addLine('error', 'touch: missing filename'); break; }
+      const { parent, name } = getParentAndName(args[0]);
+      if (!parent) { addLine('error', `touch: invalid path`); break; }
+      if (!parent.children[name]) parent.children[name] = { type: 'file', content: '' };
+      addLine('system', `created: ${name}`);
+      saveFS();
+      break;
+    }
+
+    case 'mkdir': {
+      if (!args[0]) { addLine('error', 'mkdir: missing name'); break; }
+      const { parent, name } = getParentAndName(args[0]);
+      if (!parent) { addLine('error', `mkdir: invalid path`); break; }
+      if (parent.children[name]) { addLine('error', `mkdir: already exists: ${name}`); break; }
+      parent.children[name] = { type: 'dir', children: {} };
+      addLine('system', `created dir: ${name}/`);
+      saveFS();
+      break;
+    }
+
+    case 'rm': {
+      if (!args[0]) { addLine('error', 'rm: missing name'); break; }
+      const { parent, name } = getParentAndName(args[0]);
+      if (!parent || !parent.children[name]) { addLine('error', `rm: no such file: ${args[0]}`); break; }
+      delete parent.children[name];
+      addLine('system', `removed: ${name}`);
+      saveFS();
+      break;
+    }
+
+    case 'mv': {
+      if (!args[0] || !args[1]) { addLine('error', 'mv: usage: mv <src> <dst>'); break; }
+      const src = getParentAndName(args[0]);
+      const dst = getParentAndName(args[1]);
+      if (!src.parent || !src.parent.children[src.name]) { addLine('error', `mv: no such file: ${args[0]}`); break; }
+      if (!dst.parent) { addLine('error', `mv: invalid destination`); break; }
+      dst.parent.children[dst.name] = src.parent.children[src.name];
+      delete src.parent.children[src.name];
+      addLine('system', `moved: ${src.name} → ${dst.name}`);
+      saveFS();
+      break;
+    }
+
+    case 'cp': {
+      if (!args[0] || !args[1]) { addLine('error', 'cp: usage: cp <src> <dst>'); break; }
+      const src = getParentAndName(args[0]);
+      if (!src.parent || !src.parent.children[src.name]) { addLine('error', `cp: no such file: ${args[0]}`); break; }
+      if (src.parent.children[src.name].type === 'dir') { addLine('error', `cp: can't copy directories`); break; }
+      const dst = getParentAndName(args[1]);
+      if (!dst.parent) { addLine('error', `cp: invalid destination`); break; }
+      dst.parent.children[dst.name] = { type: 'file', content: src.parent.children[src.name].content };
+      addLine('system', `copied: ${src.name} → ${dst.name}`);
+      saveFS();
+      break;
+    }
+
+    case 'write': {
+      if (!args[0]) { addLine('error', 'write: usage: write <file> <text>'); break; }
+      const { parent, name } = getParentAndName(args[0]);
+      if (!parent) { addLine('error', 'write: invalid path'); break; }
+      const content = args.slice(1).join(' ');
+      if (parent.children[name] && parent.children[name].type === 'dir') { addLine('error', 'write: is a directory'); break; }
+      parent.children[name] = { type: 'file', content };
+      addLine('system', `written to: ${name}`);
+      saveFS();
+      break;
+    }
+
+    case 'echo':
+      addLine('output', args.join(' '));
+      break;
+
+    case 'whoami':
+      addLine('output', 'a very cute user :3');
+      break;
+
+    case 'date': {
+      const now = new Date();
+      addLine('output', `  ${now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`);
+      addLine('output', `  ${now.toLocaleTimeString('en-US')}`);
+      addLine('output', '  mood: extremely kawaii ♡');
+      break;
+    }
+
+    case 'calc': {
+      if (!args[0]) { addLine('error', 'calc: provide an expression'); break; }
+      try {
+        const expr = args.join(' ').replace(/[^0-9+\-*/.() %^]/g, '').replace(/\^/g, '**');
+        const result = Function(`"use strict"; return (${expr})`)();
+        addLine('output', `  ${args.join(' ')} = ${result}`);
+      } catch { addLine('error', 'calc: invalid expression'); }
+      break;
+    }
+
+    case 'history':
+      history.forEach((h, i) => addLine('output', `  ${history.length - i}  ${h}`));
+      break;
+
+    case 'clear':
+      output.innerHTML = '';
+      return;
+
+    case 'js': {
+      const code = trimmed.slice(3).trim();
+      if (!code) { addLine('error', 'js: provide some code to run'); break; }
+      try {
+        // capture console.log
+        const logs = [];
+        const fakeConsole = { log: (...a) => logs.push(a.map(String).join(' ')), error: (...a) => logs.push('error: ' + a.join(' ')), warn: (...a) => logs.push('warn: ' + a.join(' ')) };
+        const result = Function('console', `"use strict"; ${code}`)(fakeConsole);
+        logs.forEach(l => addLine('output', '  ' + l));
+        if (result !== undefined) addLine('info', '  → ' + JSON.stringify(result, null, 2).split('\n').join('\n  '));
+        else if (!logs.length) addLine('system', '  (no return value)');
+      } catch(e) { addLine('error', '  ' + e.message); }
+      break;
+    }
+
+    case 'note': {
+      const notes = loadNotes();
+      if (!args[0]) { addLine('error', 'note: usage: note <text>  or  note del <index>'); break; }
+      if (args[0] === 'del') {
+        const idx = parseInt(args[1]) - 1;
+        if (isNaN(idx) || idx < 0 || idx >= notes.length) { addLine('error', `note: invalid index`); break; }
+        const removed = notes.splice(idx, 1)[0];
+        saveNotes(notes);
+        addLine('system', `deleted note: "${removed.text}"`);
+        break;
+      }
+      const text = args.join(' ');
+      notes.push({ text, date: new Date().toLocaleString() });
+      saveNotes(notes);
+      addLine('system', `note saved! (${notes.length} total) ♡`);
+      break;
+    }
+
+    case 'notes': {
+      const notes = loadNotes();
+      if (!notes.length) { addLine('system', '  no notes yet! use: note <text>'); break; }
+      addLine('info', `  ✦ your notes (${notes.length}) ✦`);
+      notes.forEach((n, i) => {
+        addLine('output', `  ${i+1}. ${n.text}`);
+        addLine('system', `     ${n.date}`);
+      });
+      break;
+    }
+
+    case 'set': {
+      if (!args[0]) { addLine('error', 'set: usage: set <key> <value>'); break; }
+      const val = args.slice(1).join(' ');
+      try {
+        localStorage.setItem('meowterm_kv_' + args[0], val);
+        addLine('system', `saved: ${args[0]} = "${val}"`);
+      } catch { addLine('error', 'set: could not save'); }
+      break;
+    }
+
+    case 'get': {
+      if (!args[0]) { addLine('error', 'get: usage: get <key>'); break; }
+      try {
+        const val = localStorage.getItem('meowterm_kv_' + args[0]);
+        if (val === null) addLine('error', `get: key not found: ${args[0]}`);
+        else addLine('output', `  ${args[0]} = "${val}"`);
+      } catch { addLine('error', 'get: could not read'); }
+      break;
+    }
+
+    case 'keys': {
+      try {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith('meowterm_kv_')).map(k => k.replace('meowterm_kv_',''));
+        if (!keys.length) { addLine('system', '  no keys stored yet. use: set <key> <value>'); break; }
+        addLine('info', '  ✦ stored keys ✦');
+        keys.forEach(k => addLine('output', `  ${k} = "${localStorage.getItem('meowterm_kv_'+k)}"`));
+      } catch { addLine('error', 'keys: could not read storage'); }
+      break;
+    }
+
+    case 'del': {
+      if (!args[0]) { addLine('error', 'del: usage: del <key>'); break; }
+      try {
+        localStorage.removeItem('meowterm_kv_' + args[0]);
+        addLine('system', `deleted key: ${args[0]}`);
+      } catch { addLine('error', 'del: could not delete'); }
+      break;
+    }
+
+    case 'clearstorage': {
+      try {
+        const toDelete = Object.keys(localStorage).filter(k => k.startsWith('meowterm_'));
+        toDelete.forEach(k => localStorage.removeItem(k));
+        addLine('system', `cleared all saved data (${toDelete.length} items)`);
+      } catch { addLine('error', 'clearstorage: failed'); }
+      break;
+    }
+
+
+      addLine('error', `command not found: ${cmd}`);
+      addLine('system', `  type 'help' for available commands`);
+  }
+
+  addLine('output', '');
+}
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    runCommand(input.value);
+    input.value = '';
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (histIdx < history.length - 1) { histIdx++; input.value = history[histIdx]; }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (histIdx > 0) { histIdx--; input.value = history[histIdx]; }
+    else { histIdx = -1; input.value = ''; }
+  }
+});
+
+// Boot sequence
+const ASCII_ART = [
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⡒⣢⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡤⡄",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⠃⠀⠀⠀⠉⣁⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⣀⡀⠀⠀⠈⠛⠁",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠠⣶⣟⣛⠛⠋⠉⠉⠉⠉⠉⠉⠉⠉⠉⠙⢛⣛⣷⡦⢀⣤⣶⡶⡄",
+"⠀⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⣴⣶⣶⠂⠤⢄⣀⠀⠀⠀⠈⠉⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠛⠋⠉⣰⣿⣿⣿⣇⢹⡄⠀⠀⠀⣀⠀⣠⠤⠠⡄",
+"⠀⠀⠀⠀⠀⣀⡯⠹⢲⡄⠀⠀⠀⣿⣿⣿⣷⣤⡀⠈⣹⣶⠦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣿⣿⣿⣿⣿⠀⢷⠀⠀⢰⡇⠋⠀⠀⢠⠇",
+"⠀⠀⠀⠀⠀⠛⠒⣎⡏⠀⠀⠀⠀⣿⣿⣿⡏⠙⠛⢦⡙⠉⠀⠀⠉⠓⢦⣀⠀⠀⢀⣀⣀⣀⣀⣀⡀⠀⢠⣿⣿⣿⠟⠻⣿⣿⡇⢸⡇⠀⠀⠓⠒⣦⠀⠛⢦",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⠿⠓⠂⠀⡠⠽⢦⡀⠀⠀⠀⠈⠛⢛⡉⢉⠉⠀⠀⠙⠛⠋⢛⣿⢯⡉⠛⠀⠀⠘⠈⢿⠗⢻⠀⠀⠀⠀⠛⠦⠶⠋",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣇⠀⠀⢠⠋⠀⢀⡾⢛⡆⠀⠀⠀⢉⡽⠛⠁⠈⣏⢦⠐⢶⣤⡹⣿⠒⠁⠀⠀⢀⡠⠤⢼⢣⢸⡄",
+"⠀⠀⠀⠀⠀⡴⠲⢤⡀⣀⣀⠀⠀⢸⣿⡗⠀⡇⠀⣠⣾⠟⠛⠡⣾⡴⢶⡯⠀⠤⠀⠀⢸⠸⡇⠀⡙⣿⣌⠻⣤⣀⡠⠋⠀⠀⢸⡏⢠⣇",
+"⠀⠀⠀⠀⠀⡇⠀⠀⠉⠁⣸⠀⠀⠀⢿⣿⠤⣫⡾⣿⣿⢱⣀⡼⠛⢒⡿⠀⠀⠀⠀⠀⠸⡇⢳⠐⠛⠉⠻⣇⢹⢿⣟⣦⣀⣸⣍⣷⣿⣿⡀",
+"⠀⠀⠀⠀⢀⡴⠄⠀⢰⠚⠁⠀⠀⠀⠘⢿⣿⡿⣤⠉⠁⣠⡿⠁⠀⣼⠁⠀⠀⣀⣀⡤⠂⡇⢸⡀⠀⠀⠀⠹⡆⠀⠀⠀⢿⣿⣤⣿⣿⣿⡇⠀⠀⠀⢀⢤⡀",
+"⠀⠀⠀⠀⠸⣄⣀⣀⡼⠀⠀⠀⠀⠀⠀⣼⣿⡶⠟⠀⣴⣿⠶⢦⢰⡟⡆⠀⣀⣩⣀⠀⢰⡇⣸⡓⠄⢀⣀⡀⢿⡀⡴⠛⢶⠘⣿⣿⣿⣿⣿⡀⠀⠘⢧⣀⡕",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⠃⠀⠀⢠⣿⠷⣤⡾⣼⡇⠁⢸⣏⠁⢘⡷⢘⡗⣿⣧⠆⣿⣈⡿⢺⣇⠉⢳⠟⠀⢸⣿⣿⣿⣿⣷",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣾⣽⡓⠀⠠⣼⢺⡅⠀⠂⣿⡩⡧⠀⠀⠛⠶⡛⠉⠁⣿⡏⠻⣬⠄⠨⠀⠀⢻⠀⠐⡄⠂⠀⣿⣿⣿⣿⣿⡆",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⡿⡄⠀⢸⣿⣿⠁⣀⣿⣟⣀⣇⠆⢠⣀⣤⣄⠀⠀⢿⣿⣶⣻⣮⡀⠀⠀⣼⠀⠀⡏⠁⠀⢸⣿⣿⣿⣿⣇",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⡿⣿⢿⠀⠀⣿⣿⣿⠀⣿⠟⠉⠀⢹⡄⢸⣿⣿⣿⣿⣦⣸⡟⠀⠈⢻⣷⣆⡐⣿⡂⠀⡇⠀⠀⠘⣿⣿⣿⣿⣿⠀⠀⠀⠀⢀⡶⡄",
+"⢀⣦⡀⠀⠀⠀⠠⠴⠾⠛⠋⠉⠀⣿⠀⠀⠀⣿⠁⣿⣿⠉⠀⠀⠀⠈⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠙⢿⣿⣿⠀⠀⣅⠁⠀⠀⣿⣿⣿⣿⣿⠀⠀⠀⠸⡍⣰⣧",
+"⠈⣇⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⢰⣿⠀⠀⠀⣿⠄⣿⠃⠀⠀⠀⠀⠀⢹⣿⣿⣿⠟⠛⠿⠛⢇⠀⠀⠀⠀⠀⠻⣿⠀⢸⣇⠀⠀⣼⣿⣿⣿⣿⣿",
+"⠀⢹⡀⠀⠙⢄⠀⠀⠀⠀⠀⠀⣾⣿⠀⠀⠀⣿⣆⣿⣠⣴⣶⣶⣤⣅⡒⢻⡀⠉⠳⣾⣷⣦⣸⣭⣴⡶⢶⣤⣤⣾⠀⣸⠧⠀⣸⣿⣿⣿⣿⣿⣿⡇",
+"⠀⢻⡷⠀⠀⠈⠳⣄⠀⠀⠀⣸⣿⣿⣀⠄⠀⣿⣷⣿⠛⣋⣉⣀⡀⠉⠉⠀⠀⠀⠀⠀⠉⠈⠉⣉⣈⡉⠉⠛⠿⡿⠆⣿⠂⢰⣿⣿⣿⣿⣿⣿⣿⣷",
+"⠀⣤⣳⡕⠄⠀⣦⠘⣦⠀⢠⣿⣿⣿⣿⣆⠀⠘⣿⣿⣜⠿⢳⠻⠁⠀⠀⢠⣠⢄⣀⣠⡄⠀⢚⢏⢎⣿⡿⡴⣸⣧⣾⣏⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆",
+"⠀⢻⡌⡛⠀⢀⣘⣿⣿⣄⣾⣿⣿⣿⣿⣿⣷⣤⣽⠟⠉⠉⠙⠒⢤⡀⠀⠘⢆⠀⠀⢠⠃⠀⠈⢈⡤⠞⠋⠉⠉⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣼⣆",
+"⠀⠀⠻⣮⣀⣺⣿⣿⣿⣟⣿⣿⣿⣿⣿⡻⢿⡿⠏⠀⠀⠀⠀⠀⠀⠙⢦⠀⠈⠑⠒⠋⠀⢀⡴⠋⠀⠀⠀⠀⠀⠀⢀⠈⠻⣿⣿⣿⣿⣿⣿⢿⣿⣿⣿⣿⣧",
+"⠀⠀⢺⣿⣿⣿⣿⣿⣿⣿⣵⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⢸⣷⣶⣦⣤⣶⣶⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⡆⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡄",
+"⠀⠀⠀⣽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣍⣉⣽⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀",
+"⠀⠀⠀⠘⣿⣿⣿⣿⣿⢟⣱⣿⣿⣿⣿⣿⣿⣿⡀⠀⠀⠀⠀⠀⠀⠀⠸⣿⣿⣿⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣖",
+"⠀⠀⠀⢀⣽⣿⣿⡿⣉⣸⣿⣿⣿⣿⣿⣿⣏⠻⠧⠀⠀⠀⠀⠀⠀⠀⠀⣹⣿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷",
+"⠀⠀⣴⣿⣿⣿⣿⣿⠛⣽⣿⣿⣿⣿⣿⣿⠻⣷⣤⣀⠀⠀⠀⠀⠀⠀⢠⣿⣿⠿⣦⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⣿⣿⣿⣿⣿⣿⣿",
+"⠀⠸⠿⠿⠿⠻⡿⠿⠴⠿⠿⠿⠿⢿⣿⣿⣷⣆⡉⠛⠿⢷⣶⣶⣶⣶⣿⣿⣿⣄⡊⠛⠿⢷⣶⣲⣶⣶⣶⣶⣶⣶⣿⣿⣿⣿⣿⣿⣿⡿⠿⠿⠿⠿⡷⠹⠿⠿⠿⠿⠿⡞",
+"⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠒⠽⠷⠶⠶⠴⠾⠿⠟⠛⠿⠟⠛⠛⠻⠲⠦⠤⠤⠤⠤⠤⠤⠶⠿⠛⠿⠟⠓⠊",
+];
+
+// Build a flex container: messages on left, art on right
+const bootContainer = document.createElement('div');
+bootContainer.style.cssText = 'display:flex; align-items:flex-start; gap:0px; width:100%;';
+
+const msgCol = document.createElement('div');
+msgCol.style.cssText = 'flex:1; min-width:0;';
+
+const artEl = document.createElement('pre');
+artEl.id = 'side-art';
+artEl.style.cssText = 'font-family:monospace; font-size:0.45rem; line-height:1.08; color:rgba(255,255,255,0.82); white-space:pre; margin:0 0 0 10px; flex-shrink:0;';
+artEl.textContent = ASCII_ART.join('\n');
+
+bootContainer.appendChild(msgCol);
+
+const artCol = document.createElement('div');
+artCol.style.cssText = 'display:flex; flex-direction:column; align-items:center; flex-shrink:0; margin-left:6px; margin-right:0;';
+
+artEl.style.cssText = 'font-family:monospace; font-size:0.52rem; line-height:1.08; color:rgba(255,255,255,0.82); white-space:pre; margin:0;';
+
+const art2El = document.createElement('pre');
+art2El.style.cssText = 'font-family:monospace; font-size:0.45rem; line-height:1.08; color:rgba(255,255,255,0.82); white-space:pre; margin:0;';
+art2El.textContent = `⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀⠀⠀⠄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡿⠇⠀⠀⠀⠀⢻⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡇⠀⠀⠀⠀⡸⣞⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠃⠀⠀⠀⢀⣧⢿⣽⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢴⣿⠆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⠀⠀⠀⠀⣼⣞⡿⣞⡅⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠓⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⠀⠀⠀⣰⣟⢾⣽⢫⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⣠⢤⣶⡻⣞⣿⣺⢯⣽⣳⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢠⣄⡀⠀⠀⠀⠀⠙⢦⡀⠀⠀⠀⠀⣀⣠⣤⣿⣽⣻⢾⣽⣷⣾⣽⣻⣞⣷⣳⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿⣶⣄⡀⠀⠀⠀⣉⣲⣴⢶⣞⡿⣽⣞⡷⣯⢿⡽⣞⣿⠟⠋⠁⠉⠈⠳⣟⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⣿⢶⣾⣿⡽⣯⣟⡾⣽⡷⣯⣟⡽⡾⣽⡯⠁⠀⠀⠀⠀⠀⠀⢮⣭⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⢞⣿⣿⢯⡿⣿⣯⣟⣷⣯⢿⣳⣟⡷⣽⣼⣻⣽⠀⠀⠀⠀⠀⠀⠀⢀⣼⡯⡗⠋⠤⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢾⣿⣿⣯⣽⣾⣿⣾⣗⡿⣯⡷⣯⣟⡷⣞⣼⣿⣀⠀⠀⠀⠀⢀⣠⡿⣏⡗⠈⠐⠈⠅⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⠛⠏⠉⠉⠽⢟⢿⣿⣿⣿⣿⣷⣻⢾⡽⣞⡷⠄⡹⣶⢿⣻⢿⣻⡽⢯⣼⢦⠶⠁⠈⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣯⠇⠀⠀⠀⠀⠀⠁⣽⣿⣿⣿⣷⣯⣿⣽⣛⡦⠀⠀⢩⣿⣹⢯⣷⢻⣟⠺⢣⡖⣘⠤⠓⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢈⣿⡃⠁⠀⠀⠀⢀⣤⣾⣟⢿⣻⣿⣿⣟⡾⣽⡳⠄⠎⢳⣯⢯⣟⡾⢯⣞⣯⣓⠉⢀⠀⠀⡄⢢⡀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣷⣷⣶⣳⣶⣺⣿⣿⣳⢯⣟⣿⣿⣳⢯⠛⠅⠃⠀⠀⣴⣿⡿⣬⢶⠾⠙⣊⣥⠾⡒⠊⢁⢠⠣⣌⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢺⡽⣾⡽⣯⣟⣿⡿⣯⣿⣿⣾⢿⣿⠳⢏⣈⢠⠀⠀⣰⢿⡿⣽⣉⡶⠌⠋⠉⣀⡀⠁⠀⠀⠀⣘⡐⣂⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣽⣳⣟⣳⣟⣾⣽⣿⣿⣿⣿⣿⣦⣜⡻⡽⠆⠧⣴⡟⣯⢟⡳⣭⠲⠄⠐⠀⠀⠀⠈⠁⠉⠑⢊⡕⢃⠄⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣾⣿⣯⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣾⢧⠀⠹⠾⡵⡞⡽⢢⣃⠐⠀⠀⠄⡐⠀⠀⠀⡘⢦⠘⣌⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠐⠹⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢯⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠒⡈⠀⡀⠄⡑⠢⣉⠴⣈⣆
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⢯⣏⡴⣶⣵⣢⢤⢠⡀⡄⢠⠐⡰⢌⡱⠀⡁⡀⠆⡥⠆⡥⣛⡽⣾
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠔⠉⠀⠀⢽⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣼⣻⢷⣯⡽⣞⣷⣻⡼⣡⢋⡔⠣⠜⡐⢐⠠⡓⣤⣙⣲⣽⣻⢷
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⡿⣽⣞⣷⣻⡴⣣⢜⡱⣊⡕⣊⠠⡙⡰⣭⢷⣯⣿⢿`;
+
+const meowEl = document.createElement('div');
+meowEl.style.cssText = 'font-family:"VT323",monospace; font-size:1.1rem; color:rgba(255,180,220,0.7); text-align:center; margin-top:2px; letter-spacing:0.05em; width:100%;';
+meowEl.textContent = 'meow meow meow';
+
+artCol.appendChild(artEl);
+artCol.appendChild(meowEl);
+bootContainer.appendChild(artCol);
+output.appendChild(bootContainer);
+
+function addBootLine(type, text) {
+  const span = document.createElement('span');
+  span.className = `line ${type}`;
+  span.textContent = text;
+  msgCol.appendChild(span);
+  output.scrollTop = output.scrollHeight;
+}
+
+const boot = [
+  { t:'system', v:'booting up... (ง •_•)ง',              d:0   },
+  { t:'info',   v:'loading computer stuff...... :3',      d:500 },
+  { t:'info',   v:'making it cute............. ^_^',     d:900 },
+  { t:'info',   v:'beep boop beep boop???........ :p',   d:1200},
+  { t:'system', v:"all done! welcome to meowterminal ♡",  d:1600},
+  { t:'output', v:'', d:1800},
+  { t:'output', v:"type 'help' to see all commands", d:1900},
+  { t:'output', v:'', d:2000},
+];
+boot.forEach(({t,v,d}) => setTimeout(() => addBootLine(t,v), d));
+
+// Pixel hearts
+const HEART_COLORS = ['#ff85a1','#ffb3d9','#ff4d88','#ffc2d4','#ff6eb4','#ff3377','#ffadd6'];
+// pixel heart shape as SVG (8x8 pixel art)
+function heartSVG(color) {
+  // 7x6 pixel heart grid
+  const px = [
+    [0,1,1,0,1,1,0],
+    [1,1,1,1,1,1,1],
+    [1,1,1,1,1,1,1],
+    [0,1,1,1,1,1,0],
+    [0,0,1,1,1,0,0],
+    [0,0,0,1,0,0,0],
+  ];
+  let rects = '';
+  px.forEach((row,y) => row.forEach((on,x) => {
+    if(on) rects += `<rect x="${x*4}" y="${y*4}" width="4" height="4" fill="${color}"/>`;
+  }));
+  return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='24'>${encodeURIComponent(rects)}</svg>`;
+}
+
+function makeHeart(forceDir) {
+  const el = document.createElement('img');
+  el.className = 'pixel-heart';
+  const color = HEART_COLORS[Math.floor(Math.random()*HEART_COLORS.length)];
+  el.src = heartSVG(color);
+  const size = (10 + Math.random()*18);
+  el.style.width = size + 'px';
+  el.style.height = 'auto';
+  el.style.left = Math.random()*100 + 'vw';
+  el.style.animationDuration = (9 + Math.random()*11) + 's';
+  el.style.animationDelay = (Math.random()*10) + 's';
+  const dir = forceDir || (Math.random() < 0.5 ? 'up' : 'down');
+  el.classList.add(dir);
+  document.body.appendChild(el);
+  return el;
+}
+function addSparkles(n) {
+  for (let i=0;i<n;i++) {
+    const h = makeHeart();
+    setTimeout(() => h.remove(), 22000);
+  }
+}
+// Assign pixel hearts to inline elements
+const inlineHeartSrc = heartSVG('#ff6eb4');
+document.getElementById('prompt-heart').src = inlineHeartSrc;
+
+// Initial ambient hearts
+for (let i=0;i<22;i++) makeHeart();
+
+// Focus terminal on click
+document.getElementById('terminal').addEventListener('click', () => input.focus());
+input.focus();
+</script>
+</body>
+</html>
