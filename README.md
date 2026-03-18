@@ -92,6 +92,6 @@ please do not copy, reuse, or redistribute the code without permission.
 
 ## live demo
 
-https://yourusername.github.io/meowterminal
+https://zankyoz.github.io/meowterminal
 
 made by [yana](https://github.com/zankyoz) :3
