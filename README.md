@@ -6,7 +6,7 @@ type commands, make notes, run javascript.
 
 ---
 
-## what is this (ﾉ◕ヮ◕)ﾉ*:･ﾟ✧
+## what is this (ﾉ◕ヮ◕)ﾉ
 
 it's a fully functional fake terminal but make it cute!!  
 pink. glowy. has pixel hearts floating around.  
